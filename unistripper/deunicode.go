@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"log/slog"
 	"regexp"
 	"strconv"
 )
@@ -43,10 +44,12 @@ func StripUnicode(ctx context.Context, in io.Reader, out io.Writer) (err error) 
 
 		line := strconv.QuoteToASCII(scanner.Text())
 		line = unicodeRE.ReplaceAllString(line, "")
-		if line, err = strconv.Unquote(line); err != nil {
-			return err
+		unquoted := ""
+		if unquoted, err = strconv.Unquote(line); err != nil {
+			slog.Warn("syntax error", "line", line)
+			unquoted = line
 		}
-		if _, err = io.WriteString(out, line); err != nil {
+		if _, err = io.WriteString(out, unquoted); err != nil {
 			return err
 		}
 	}
